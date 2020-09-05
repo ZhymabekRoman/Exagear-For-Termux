@@ -1,0 +1,59 @@
+#! /bin/bash
+
+#
+# This is a wrapper around ExaGear for binfmt_misc.
+#
+# binfmt_misc a way to run non-native executables on a Linux system. When
+# the kernel running on ARM is requested to execve() an x86 binary it invokes
+# this wrapper instead of the binary; the wrapper in turn starts the binary
+# under ExaGear.
+#
+# For more details, see Documentation/binfmt_misc.txt in the kernel source.
+#
+# Copyright (c) 2013 "Elbrus Technologies" LLC. All rights reserved.
+#
+# This script comes NO warranty, not even for MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.
+#
+
+. /etc/exagear.conf
+
+saved_path="$PATH"
+saved_ifs="$IFS"
+
+PATH="/bin:/usr/bin"
+IFS=$(echo)
+
+exe=$(realpath "$1")
+shift
+
+ubt_home=$(dirname "$0")
+
+ubt=${UBT_OVERRIDE:-"$ubt_home/$UBT_BINARY"}
+
+installation_dir=$(realpath "$ubt_home/../")
+images_dir="$installation_dir/images/"
+
+image_dir=
+
+for img in $(find $images_dir -mindepth 1 -maxdepth 1 -type d) ; do
+    if (echo "$exe" | grep -E "^$img" > /dev/null) ; then
+        image_dir="$img/"
+        exe=${exe:${#img}}
+        break;
+    fi
+done
+
+if [ -z "$image_dir" ] ; then
+    echo "The file $exe belongs to no guest image located under the directory $images_dir"
+    exit 127
+fi
+
+vpaths_list="$image_dir/.exagear/vpaths-list"
+opaths_list="$image_dir/.exagear/opaths-list"
+
+PATH="$saved_path"
+IFS="$saved_ifs"
+
+$ubt --path-prefix $image_dir --vpaths-list $vpaths_list --opaths-list $opaths_list -f $exe -- "$@"
+exit $?
