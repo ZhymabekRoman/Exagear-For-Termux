@@ -18,7 +18,7 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##
 
-PROGRAM_VERSION="0.5 beta"
+PROGRAM_VERSION="0.51 beta"
 
 # Colors
 GREEN='\033[0;32m'
@@ -101,6 +101,12 @@ EOF
       # Control will enter here if 'storage' doesn't exist.
       echo -e "Folder 'storage' in guest system not found. Creating....\n"
       mkdir $1/storage/
+    fi
+
+    if [ ! -d $1/dev/ ]; then
+      # Control will enter here if 'dev' doesn't exist.
+      echo -e "Folder 'dev' in guest system not found. Creating....\n"
+      mkdir $1/dev/
     fi
 
     $test_binary
