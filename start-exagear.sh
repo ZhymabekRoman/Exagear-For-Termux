@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/env bash
+#!/bin/bash
 ##
 ## Script for managing Exagear'ed Linux distribution installations/running in Termux.
 ##
@@ -18,7 +18,7 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##
 
-PROGRAM_VERSION="0.51 beta"
+PROGRAM_VERSION="0.52 beta"
 
 # Colors
 GREEN='\033[0;32m'
@@ -27,9 +27,9 @@ NC='\033[0m'
 function print_welcome_message {
     clear
     echo -e "
-░█░█░█▀█░█▀▄░█▀█
-░░▀█░█▀▀░█░█░█▀█
-░░░▀░▀░░░▀▀░░▀░▀
+    ░█░█░█▀█░█▀▄░█▀█
+    ░░▀█░█▀▀░█░█░█▀█
+    ░░░▀░▀░░░▀▀░░▀░▀
     "
     echo "Exagear for Termux by Zhymabek_Roman"
     echo "Version: $PROGRAM_VERSION"
@@ -76,22 +76,25 @@ EOM
 }
 
 function start_guest {
-    case `cat $1/etc/passwd` in
-		  xdroid:x:10287:10287::/home/xdroid/:/bin/sh)
-		     echo -e "Editing passwd for better compatibility\n"
-		    	edit_passwd $1 ;;
-	   	"")
-			    echo "'passwd' in guest not found. Exiting"; edit_passwd $1;;
-		esac
-		
+    chmod +x ./ubt_x32a32_al_mem2g ./ubt_x32a32_al_mem3g ./test-memory-available
+
+    case `cat $1/etc/passwd` in 
+        xdroid:x:10287:10287::/home/xdroid/:/bin/sh)
+            echo -e "ExaGear Windows/RPG/Strategy's rootfs system detected. Editing passwd for better compatibility\n"
+            edit_passwd $1 ;;
+        "")
+            echo "'passwd' in guest not found. Exiting"; edit_passwd $1;;
+    esac
+
     # unset LD_PRELOAD in case termux-exec is installed
-   	# We need this to disable the preloaded libtermux-exec.so library
-	  	# which redefines 'execve()' implementation.
+    # We need this to disable the preloaded libtermux-exec.so library
+    # which redefines 'execve()' implementation.
     unset LD_PRELOAD
 
-	    # /etc/resolv.conf may not be configured, so write in it our configuraton.
-    		echo -e "Writing resolv.conf file (NS 1.1.1.1/1.0.0.1)...\n"
-    		rm -f $1/etc/resolv.conf
+    # /etc/resolv.conf may not be configured, so write in it our configuraton.
+    echo -e "Writing resolv.conf file (NS 1.1.1.1/1.0.0.1)...\n"
+    rm -f $1/etc/resolv.conf
+
 cat <<- EOF > $1/etc/resolv.conf
 nameserver 1.1.1.1
 nameserver 1.0.0.1
@@ -109,27 +112,30 @@ EOF
       mkdir $1/dev/
     fi
 
-    $test_binary
-    test_bin_ret=$?
-    
-    if [ "$test_bin_ret" -eq  '0' ]; then
-      is_3g="1"
-      echo -e "System memory configuration is determined as 3g/1g\n"
+    touch $1/root/.hushlogin
+
+    if ./test-memory-available  0xa0000000 ; then
+        MEMORY_BITS=3g
     else
-      is_3g="0"
-      echo -e "System memory configuration is determined as 2g/2g\n"
+        MEMORY_BITS=2g
+    fi
+
+    if [ "$MEMORY_BITS" = '3g' ]; then
+      echo -e "System memory configuration is determined as 3g\n"
+    elif [ "$MEMORY_BITS" = '2g' ]; then
+      echo -e "System memory configuration is determined as 2g\n"
     fi
 
     command=""
-    command+=" --use-sugid-wrapper `pwd`/ubt-sugid-wrapper "
+    #command+=" --use-sugid-wrapper `pwd`/ubt-sugid-wrapper "
     command+=" --allow-dash-dash-x"
     command+=" --path-prefix $1"
     command+=" --vfs-hacks=tlsasws,tsi,spd"
     command+=" --vfs-kind guest-first"
     command+=" --vpaths-list `pwd`/vpaths-list"
     command+=" --tmp-dir $1/tmp"
-    command+=" --force-shm-align"
-    command+=' -- /usr/bin/env -i 
+    #command+=" --force-shm-align"
+    command+=' -- /usr/bin/env -i
     USER=root
     HOME=/root
     PATH=/usr/local/sbin:/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr
@@ -137,22 +143,26 @@ EOF
     LANGUAGE=en_US.utf8
     LC_ALL=C
     BASH=/bin/bash
-    SHELL=/bin/bash 
+    SHELL=/bin/bash
     PREFIX=/usr
-    TERM=xterm 
+    TERM=xterm
     TMDIR=/tmp
     LD_LIBRARY_PATH=/lib:/usr/lib:/usr/lib/i386-linux-gnu/:/var/lib:/var/lib/dpkg/:/lib/i386-linux-gnu:/usr/local/lib/'
     if [ -f  $1/usr/bin/fakeroot-tcp ]; then
         command+=" /usr/bin/fakeroot-tcp"
-    else 
+    else
         echo -e "'fakeroot' does not exist. You may be using a different image of the system and you may have problems with administrative rights. \n"
     fi
     command+=" /bin/bash --login "
-    
+
     echo -e  "${GREEN}[Starting x86 environment]${NC}\n"
-    
-    ./ubt_x32a32_al_mem3g $command
-    
+
+   if [ "$MEMORY_BITS" = '3g' ]; then
+      ./ubt_x32a32_al_mem3g $command
+    elif [ "$MEMORY_BITS" = '2g' ]; then
+      ./ubt_x32a32_al_mem2g $command
+    fi
+
     echo -e "\n${GREEN}[Exit from x86 environment]${NC}\n"
 }
 
