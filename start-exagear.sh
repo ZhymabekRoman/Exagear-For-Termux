@@ -92,13 +92,11 @@ function start_guest {
     unset LD_PRELOAD
 
     # /etc/resolv.conf may not be configured, so write in it our configuraton.
-    echo -e "Writing resolv.conf file (NS 1.1.1.1/1.0.0.1)...\n"
-    rm -f $1/etc/resolv.conf
-
-cat <<- EOF > $1/etc/resolv.conf
-nameserver 1.1.1.1
-nameserver 1.0.0.1
-EOF
+    #Setup DNS
+    echo -e "Writing resolv.conf file (NS 8.8.8.8/8.8.4.4)...\n"
+    echo "127.0.0.1 localhost" > $1/etc/hosts
+    echo "nameserver 8.8.8.8" > $1/etc/resolv.conf
+    echo "nameserver 8.8.4.4" >> $1/etc/resolv.conf
 
     if [ ! -d $1/storage/ ]; then
       # Control will enter here if 'storage' doesn't exist.
@@ -111,7 +109,7 @@ EOF
       echo -e "Folder 'dev' in guest system not found. Creating....\n"
       mkdir $1/dev/
     fi
-
+    #This step is only needed for Ubuntu to prevent Group error
     touch $1/root/.hushlogin
 
     if ./test-memory-available  0xa0000000 ; then
