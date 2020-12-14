@@ -18,6 +18,7 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##
 
+# Constants 
 PROGRAM_NAME="ExaGear for Termux"
 PROGRAM_VERSION="1.0"
 CURRENT_WORK_FOLDER="`pwd`"
@@ -26,6 +27,7 @@ CURRENT_WORK_FOLDER="`pwd`"
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+# Check whether it is running, in the root or normal environment.
 if [ "$(id -u)" = "0" ]; then
 	echo
 	echo -e "Error: utility '${PROGRAM_NAME}' should not be used as root."
@@ -280,6 +282,12 @@ function setup_fake_proc {
 function start_guest {
     chmod +x $CURRENT_WORK_FOLDER/ubt_x32a32_al_mem2g $CURRENT_WORK_FOLDER/ubt_x32a32_al_mem3g $CURRENT_WORK_FOLDER/test-memory-available
 
+    # Check the integrity of the system 
+    if [ ! -d $1/bin/ ]; then
+      echo -e "Folder 'bin' in guest system not found. The guest system may be damaged\n"
+      exit
+    fi
+
 #    case `cat $1/etc/passwd` in 
 #        xdroid:x:10287:10287::/home/xdroid/:/bin/sh)
 #            echo -e "ExaGear Windows/RPG/Strategy's rootfs system detected. Editing passwd for better compatibility\n"
@@ -293,20 +301,18 @@ function start_guest {
     # which redefines 'execve()' implementation.
     unset LD_PRELOAD
 
-    # /etc/resolv.conf may not be configured, so write in it our configuraton.
+    # /etc/resolv.conf and /etc/hosts may not be configured, so write in it our configuraton.
     echo -e "Writing resolv.conf file (NS 8.8.8.8/8.8.4.4)...\n"
     echo "127.0.0.1 localhost" > $1/etc/hosts
     echo "nameserver 8.8.8.8" > $1/etc/resolv.conf
     echo "nameserver 8.8.4.4" >> $1/etc/resolv.conf
 
+    # Check the storage and dev folders exists
     if [ ! -d $1/storage/ ]; then
-      # Control will enter here if 'storage' doesn't exist.
       echo -e "Folder 'storage' in guest system not found. Creating....\n"
       mkdir $1/storage/
     fi
-
     if [ ! -d $1/dev/ ]; then
-      # Control will enter here if 'dev' doesn't exist.
       echo -e "Folder 'dev' in guest system not found. Creating....\n"
       mkdir $1/dev/
     fi
@@ -316,6 +322,7 @@ function start_guest {
 
     setup_fake_proc $1
 
+    # Check memory configuration
     if ./test-memory-available  0xa0000000 ; then
         MEMORY_BITS="3g"
     else
@@ -377,12 +384,4 @@ function start_guest {
     echo -e "\n${GREEN}[Exit from x86 environment]${NC}\n"
 }
 
-if [ "$1" == "--usage" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ "$1" == "-dh" ]; then
-    print_usage_and_exit
-elif [ "$1" == "" ]; then
-    print_welcome_message
-    start_guest $CURRENT_WORK_FOLDER/exagear-fs
-else
-    print_welcome_message
-    start_guest $1
-fi
+if [ "$1" == "--usage" ] || [ "$1" ==
