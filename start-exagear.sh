@@ -343,7 +343,7 @@ function start_guest {
     exagear_command+=" --tmp-dir $1/tmp"
 #    exagear_command+=" --opaths-list $CURRENT_WORK_FOLDER/opaths-list"
 #    exagear_command+=" --strace"
-    exagear_command+=" --strace-unimpl"
+#    exagear_command+=" --strace-unimpl"
 #    exagear_command+=" --allow-vfs-passthrough"
     exagear_command+=" -- /usr/bin/env -i
     USER=root
@@ -370,6 +370,7 @@ function start_guest {
     proot_command+=" -b /sys:$1/sys"
     proot_command+=" -b /proc:$1/proc"
     proot_command+=" -b /dev:$1/dev"
+    proot_command+=" -b /storage:$1/storage"
     proot_command+=" -b $1/sys/fs/selinux/"
     proot_command+=" -b $1/tmp:$1/dev/shm"
     proot_command+=" -b /dev/urandom:/dev/random"
@@ -384,4 +385,12 @@ function start_guest {
     echo -e "\n${GREEN}[Exit from x86 environment]${NC}\n"
 }
 
-if [ "$1" == "--usage" ] || [ "$1" ==
+if [ "$1" == "--usage" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ "$1" == "-dh" ]; then
+    print_usage_and_exit
+elif [ "$1" == "" ]; then
+    print_welcome_message
+    start_guest $CURRENT_WORK_FOLDER/exagear-fs
+else
+    print_welcome_message
+    start_guest $1
+fi
