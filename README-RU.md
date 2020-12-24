@@ -13,7 +13,7 @@ Exagear - это новая технология виртуализации, к�
 ### In Termux:
 1) Устанвливаем tar, proot и git:
 ```
-pkg update -y & & pkg install tar proot git -y
+pkg update -y && pkg install tar proot git -y
 ```
 2) Клонируем этот репозитории в домашнию папку Termux:
 ```
@@ -22,8 +22,8 @@ git clone https://github.com/ZhymabekRoman/Exagear-For-Termux ~/ExaTermux
 2) Давайте откроем каталог ExaTermux, загрузим и распакуем в папку exagear-fs, например, rootfs образ системы Debian 10. Именно в этой папке должны храниться распакованные образы дистрибутивов на основе ядра Linux:
 ```
 cd ~/ExaTermux
-wget https ://github.com/termux/proot-distro/releases/download/v1.1-debian-rootfs/debian-buster-i386-2020.12.05.tar.gz
-tar -C exagear-fs/--warning = no-unknown-keyword --delay-directory-restore --preserve-permissions --strip = 0 -xvf debian-buster-i386-2020.12.05.tar.gz --exclude = 'dev' | |:
+wget https://github.com/termux/proot-distro/releases/download/v1.1-debian-rootfs/debian-buster-i386-2020.12.05.tar.gz
+mkdir exagear-fs/ && tar -C exagear-fs/ --warning=no-unknown-keyword --delay-directory-restore --preserve-permissions --strip=0 -xvf debian-buster-i386-2020.12.05.tar.gz --exclude='dev'||: && cd exagear-fs/ && mv debian-buster-i386-2020.12.05/* ./ && rm -rfv debian-buster-i386-2020.12.05/
 ```
 3) Готово. Давайте запустим наконец-то Exagear-For-Termux
 ```
