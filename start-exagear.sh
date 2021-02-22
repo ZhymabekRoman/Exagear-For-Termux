@@ -1,22 +1,9 @@
 #!/bin/bash
 ##
 ## Script for managing Exagear'ed Linux distribution installations/running in Termux.
+## by Zhymabek Roman
 ##
-## Copyright (C) 2020 Zhymabek_Roman <***REMOVED***>
-##
-## This program is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with this program. If not, see <http://www.gnu.org/licenses/>.
-##
+## Some pieces of code were taken from proot-distro: https://github.com/termux/proot-distro
 
 # Constants 
 PROGRAM_NAME="ExaGear for Termux"
@@ -282,19 +269,20 @@ function setup_fake_proc {
 function start_guest {
     chmod +x $CURRENT_WORK_FOLDER/ubt_x32a32_al_mem2g $CURRENT_WORK_FOLDER/ubt_x32a32_al_mem3g $CURRENT_WORK_FOLDER/test-memory-available
 
-    # Check the integrity of the system 
+    # Check the integrity of the guest system 
     if [ ! -d $1/bin/ ]; then
-      echo -e "Folder 'bin' in guest system not found. The guest system may be damaged\n"
+      echo -e "Folder 'bin' in guest system not found. The guest system is likely damaged\n"
       exit
     fi
 
-#    case `cat $1/etc/passwd` in 
-#        xdroid:x:10287:10287::/home/xdroid/:/bin/sh)
-#            echo -e "ExaGear Windows/RPG/Strategy's rootfs system detected. Editing passwd for better compatibility\n"
-#            edit_passwd $1 ;;
-#        "")
-#            echo "'passwd' in guest not found. Exiting"; edit_passwd $1;;
-#    esac
+    case `cat $1/etc/passwd` in 
+        xdroid:x:*:*::/home/xdroid/:/bin/sh)
+            echo -e "ExaGear Windows/RPG/Strategy's rootfs system detected. Editing passwd for better compatibility\n"
+            edit_passwd $1 ;;
+        "")
+            echo "'passwd' file in guest system not found. Exiting"
+	    exit 1;;
+    esac
 
     # unset LD_PRELOAD in case termux-exec is installed
     # We need this to disable the preloaded libtermux-exec.so library
@@ -341,10 +329,6 @@ function start_guest {
     exagear_command+=" --vfs-kind guest-first"
     exagear_command+=" --vpaths-list $CURRENT_WORK_FOLDER/vpaths-list"
     exagear_command+=" --tmp-dir $1/tmp"
-#    exagear_command+=" --opaths-list $CURRENT_WORK_FOLDER/opaths-list"
-#    exagear_command+=" --strace"
-#    exagear_command+=" --strace-unimpl"
-#    exagear_command+=" --allow-vfs-passthrough"
     exagear_command+=" -- /usr/bin/env -i
     USER=root
     HOME=/root
