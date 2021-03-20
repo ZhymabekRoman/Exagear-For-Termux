@@ -11,9 +11,9 @@ Exagear is a new virtualization technology that enables Intel x86 applications t
 
 ## Installation
 ### In Termux:
-1) Install proot, tar and git:
+1) Install tar and git:
 ```
-pkg update -y && pkg install tar proot git -y
+pkg update -y && pkg install tar git -y
 ```
 2) Clone this repository to home directory:
 ```

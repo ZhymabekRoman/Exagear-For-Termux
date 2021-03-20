@@ -7,8 +7,8 @@
 
 # Constants 
 PROGRAM_NAME="ExaGear for Termux"
-PROGRAM_VERSION="1.0"
-CURRENT_WORK_FOLDER="`pwd`"
+PROGRAM_VERSION="1.1"
+CURRENT_WORK_FOLDER=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 
 # Colors
 GREEN='\033[0;32m'
@@ -17,7 +17,7 @@ NC='\033[0m'
 # Check whether it is running, in the root or normal environment.
 if [ "$(id -u)" = "0" ]; then
 	echo
-	echo -e "Error: utility '${PROGRAM_NAME}' should not be used as root."
+	echo -e "Error: '${PROGRAM_NAME}' should not be used as root."
 	echo
 	exit 1
 fi
@@ -30,7 +30,6 @@ function print_welcome_message {
     "
     echo "${PROGRAM_NAME} by Zhymabek_Roman"
     echo "Version: ${PROGRAM_VERSION}"
-    echo "Made with love from Kazakhstan : )"
     echo -e "\n"
     echo -e "Copyright (c) 2013-2019 'Elbrus Technologies' LLC. All rights reserved.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
     echo -e "\n"
@@ -267,18 +266,18 @@ function setup_fake_proc {
 
 
 function start_guest {
-    chmod +x $CURRENT_WORK_FOLDER/ubt_x32a32_al_mem2g $CURRENT_WORK_FOLDER/ubt_x32a32_al_mem3g $CURRENT_WORK_FOLDER/test-memory-available
+    chmod +x "$CURRENT_WORK_FOLDER"/ubt_x32a32_al_mem2g "$CURRENT_WORK_FOLDER"/ubt_x32a32_al_mem3g "$CURRENT_WORK_FOLDER"/test-memory-available
 
     # Check the integrity of the guest system 
-    if [ ! -d $1/bin/ ]; then
+    if [ ! -d "$1"/bin/ ]; then
       echo -e "Folder 'bin' in guest system not found. The guest system is likely damaged\n"
       exit
     fi
 
-    case `cat $1/etc/passwd` in 
+    case `cat "$1"/etc/passwd` in 
         xdroid:x:*:*::/home/xdroid/:/bin/sh)
             echo -e "ExaGear Windows/RPG/Strategy's rootfs system detected. Editing passwd for better compatibility\n"
-            edit_passwd $1 ;;
+            edit_passwd "$1" ;;
         "")
             echo "'passwd' file in guest system not found. Exiting"
 	    exit 1;;
@@ -289,26 +288,29 @@ function start_guest {
     # which redefines 'execve()' implementation.
     unset LD_PRELOAD
 
+    # Export proot's ELF loader
+    export PROOT_LOADER="$CURRENT_WORK_FOLDER"/loader
+
     # /etc/resolv.conf and /etc/hosts may not be configured, so write in it our configuraton.
     echo -e "Writing resolv.conf file (NS 8.8.8.8/8.8.4.4)...\n"
-    echo "127.0.0.1 localhost" > $1/etc/hosts
-    echo "nameserver 8.8.8.8" > $1/etc/resolv.conf
-    echo "nameserver 8.8.4.4" >> $1/etc/resolv.conf
+    echo "127.0.0.1 localhost" > "$1"/etc/hosts
+    echo "nameserver 8.8.8.8" > "$1"/etc/resolv.conf
+    echo "nameserver 8.8.4.4" >> "$1"/etc/resolv.conf
 
     # Check the storage and dev folders exists
-    if [ ! -d $1/storage/ ]; then
+    if [ ! -d "$1"/storage/ ]; then
       echo -e "Folder 'storage' in guest system not found. Creating....\n"
       mkdir $1/storage/
     fi
-    if [ ! -d $1/dev/ ]; then
+    if [ ! -d "$1"/dev/ ]; then
       echo -e "Folder 'dev' in guest system not found. Creating....\n"
       mkdir $1/dev/
     fi
 
     # This step is only needed for Ubuntu to prevent Group error
-    touch $1/root/.hushlogin
+    touch "$1"/root/.hushlogin
 
-    setup_fake_proc $1
+    setup_fake_proc "$1"
 
     # Check memory configuration
     if ./test-memory-available  0xa0000000 ; then
@@ -324,11 +326,12 @@ function start_guest {
     elif [ "$MEMORY_BITS" = '2g' ]; then
         exagear_command="./ubt_x32a32_al_mem2g"
     fi
-    exagear_command+=" --path-prefix $1"
+
+    exagear_command+=" --path-prefix "$1""
     exagear_command+=" --vfs-hacks=tlsasws,tsi,spd"
     exagear_command+=" --vfs-kind guest-first"
-    exagear_command+=" --vpaths-list $CURRENT_WORK_FOLDER/vpaths-list"
-    exagear_command+=" --tmp-dir $1/tmp"
+    exagear_command+=" --vpaths-list "$CURRENT_WORK_FOLDER"/vpaths-list"
+    exagear_command+=" --tmp-dir "$1"/tmp"
     exagear_command+=" -- /usr/bin/env -i
     USER=root
     HOME=/root
@@ -344,25 +347,25 @@ function start_guest {
     LD_LIBRARY_PATH=/lib:/usr/lib:/usr/lib/i386-linux-gnu/:/var/lib:/var/lib/dpkg/:/lib/i386-linux-gnu:/usr/local/lib/"
     exagear_command+=" /bin/bash --login "
 
-    proot_command="proot"
+    proot_command=""$CURRENT_WORK_FOLDER"/proot"
     proot_command+=" -0"
     proot_command+=" -L"
     proot_command+=" --sysvipc"
     proot_command+=" --link2symlink"
     proot_command+=" --kill-on-exit"
     proot_command+=" --kernel-release=5.4.0-fake-kernel"
-    proot_command+=" -b /sys:$1/sys"
-    proot_command+=" -b /proc:$1/proc"
-    proot_command+=" -b /dev:$1/dev"
-    proot_command+=" -b /storage:$1/storage"
-    proot_command+=" -b $1/sys/fs/selinux/"
-    proot_command+=" -b $1/tmp:$1/dev/shm"
+    proot_command+=" -b /sys:"$1"/sys"
+    proot_command+=" -b /proc:"$1"/proc"
+    proot_command+=" -b /dev:"$1"/dev"
+    proot_command+=" -b /storage:"$1"/storage"
+    proot_command+=" -b "$1"/sys/fs/selinux/"
+    proot_command+=" -b "$1"/tmp:"$1"/dev/shm"
     proot_command+=" -b /dev/urandom:/dev/random"
-    proot_command+=" -b $1/proc/.stat:$1/proc/stat"
-    proot_command+=" -b $1/proc/.loadavg:$1/proc/loadavg"
-    proot_command+=" -b $1/proc/.uptime:$1/proc/uptime"
-    proot_command+=" -b $1/proc/.version:$1/proc/version"
-    proot_command+=" -b $1/proc/.vmstat:$1/proc/vmstat"
+    proot_command+=" -b "$1"/proc/.stat:"$1"/proc/stat"
+    proot_command+=" -b "$1"/proc/.loadavg:"$1"/proc/loadavg"
+    proot_command+=" -b "$1"/proc/.uptime:"$1"/proc/uptime"
+    proot_command+=" -b "$1"/proc/.version:"$1"/proc/version"
+    proot_command+=" -b "$1"/proc/.vmstat:"$1"/proc/vmstat"
 
     echo -e "${GREEN}[Starting x86 environment]${NC}\n"
     $proot_command $exagear_command
@@ -373,8 +376,8 @@ if [ "$1" == "--usage" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ "$1" =
     print_usage_and_exit
 elif [ "$1" == "" ]; then
     print_welcome_message
-    start_guest $CURRENT_WORK_FOLDER/exagear-fs
+    start_guest "$CURRENT_WORK_FOLDER"/exagear-fs/
 else
     print_welcome_message
-    start_guest $1
+    start_guest "$1"
 fi
