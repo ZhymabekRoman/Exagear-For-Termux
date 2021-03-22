@@ -1,0 +1,3 @@
+[submodule "bin/proot-static"]
+	path = bin/proot-static
+	url = https://github.com/ZhymabekRoman/proot-static
