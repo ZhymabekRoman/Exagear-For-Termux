@@ -3,13 +3,13 @@
 ## Script for managing Exagear'ed Linux distribution installations/running in Termux.
 ## by Zhymabek Roman
 ##
-## Some pieces of code were taken from proot-distro: https://github.com/termux/proot-distro
+## Some pieces of code taken from proot-distro: https://github.com/termux/proot-distro
 
-# Constants 
+# Constants
 PROGRAM_NAME="ExaGear for Termux"
-PROGRAM_VERSION="2.0"
+PROGRAM_VERSION="2.1"
 CURRENT_WORK_FOLDER=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-DEFAULT_ROOTFS_FOLDER=""$CURRENT_WORK_FOLDER"/exagear-fs/"
+DEFAULT_ROOTFS_FOLDER="exagear-fs"
 
 # Colors
 GREEN='\033[0;32m'
@@ -276,7 +276,7 @@ function start_guest {
 
     chmod +x "$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem2g "$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem3g "$CURRENT_WORK_FOLDER"/bin/test-memory-available
 
-    # Check the integrity of the guest system 
+    # Check the integrity of the guest system
     if [ ! -d "$rootfs_path"/bin/ ]; then
       echo -e "Folder 'bin' in guest system not found. The guest system is likely damaged\n"
       exit
@@ -311,11 +311,20 @@ function start_guest {
       echo -e "Folder 'dev' in guest system not found. Creating....\n"
       mkdir $rootfs_path/dev/
     fi
+    if [ ! -d "$rootfs_path"/proc/ ]; then
+      echo -e "Folder 'proc' in guest system not found. Creating....\n"
+      mkdir $rootfs_path/proc/
+    fi
+    if [ ! -d "$rootfs_path"/sys/ ]; then
+      echo -e "Folder 'sys' in guest system not found. Creating....\n"
+      mkdir $rootfs_path/sys/
+    fi
+
 
     # This step is only needed for Ubuntu to prevent Group error
     touch "$rootfs_path"/root/.hushlogin
 
-    setup_fake_proc "$rootfs_path"
+    setup_fake_proc "$CURRENT_WORK_FOLDER"/"$rootfs_path"/
 
     # Check memory configuration
     if ./bin/test-memory-available  0xa0000000 ; then
@@ -327,16 +336,16 @@ function start_guest {
     echo -e "System memory configuration is determined as ${MEMORY_BITS}\n"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
-        exagear_command="./bin/ubt_x32a32_al_mem3g"
+        exagear_command="/bin/ubt_x32a32_al_mem3g"
     elif [ "$MEMORY_BITS" = '2g' ]; then
-        exagear_command="./bin/ubt_x32a32_al_mem2g"
+        exagear_command="/bin/ubt_x32a32_al_mem2g"
     fi
 
-    exagear_command+=" --path-prefix "$rootfs_path""
+    exagear_command+=" --path-prefix /"$rootfs_path"/"
     exagear_command+=" --vfs-hacks=tlsasws,tsi,spd"
     exagear_command+=" --vfs-kind guest-first"
-    exagear_command+=" --vpaths-list "$CURRENT_WORK_FOLDER"/bin/vpaths-list"
-    exagear_command+=" --tmp-dir "$rootfs_path"/tmp"
+    exagear_command+=" --vpaths-list /bin/vpaths-list"
+    exagear_command+=" --tmp-dir /"$rootfs_path"/tmp"
     exagear_command+=" -- /usr/bin/env -i
     USER=root
     HOME=/root
@@ -354,23 +363,25 @@ function start_guest {
 
     proot_command=""$CURRENT_WORK_FOLDER"/bin/proot-static/proot_static"
     proot_command+=" -0"
+    proot_command+=" --link2symlink"
+    proot_command+=" -r "$CURRENT_WORK_FOLDER"/"
     proot_command+=" -L"
     proot_command+=" --sysvipc"
-    proot_command+=" --link2symlink"
     proot_command+=" --kill-on-exit"
     proot_command+=" --kernel-release=5.4.0-fake-kernel"
-    proot_command+=" -b /sys:"$rootfs_path"/sys"
-    proot_command+=" -b /proc:"$rootfs_path"/proc"
-    proot_command+=" -b /dev:"$rootfs_path"/dev"
-    proot_command+=" -b /storage:"$rootfs_path"/storage"
-    proot_command+=" -b "$rootfs_path"/sys/fs/selinux/"
-    proot_command+=" -b "$rootfs_path"/tmp:"$rootfs_path"/dev/shm"
+    proot_command+=" -b /sys"
+    proot_command+=" -b /proc"
+    proot_command+=" -b /dev"
+    proot_command+=" -b /storage"
+    proot_command+=" -b "$rootfs_path"/sys/fs/selinux/:/sys/fs/selinux"
+    proot_command+=" -b "$rootfs_path"/tmp/:/dev/shm/"
     proot_command+=" -b /dev/urandom:/dev/random"
-    proot_command+=" -b "$rootfs_path"/proc/.stat:"$rootfs_path"/proc/stat"
-    proot_command+=" -b "$rootfs_path"/proc/.loadavg:"$rootfs_path"/proc/loadavg"
-    proot_command+=" -b "$rootfs_path"/proc/.uptime:"$rootfs_path"/proc/uptime"
-    proot_command+=" -b "$rootfs_path"/proc/.version:"$rootfs_path"/proc/version"
-    proot_command+=" -b "$rootfs_path"/proc/.vmstat:"$rootfs_path"/proc/vmstat"
+    proot_command+=" -w /"
+    proot_command+=" -b "$rootfs_path"/proc/.stat:/proc/stat"
+    proot_command+=" -b "$rootfs_path"/proc/.loadavg:/proc/loadavg"
+    proot_command+=" -b "$rootfs_path"/proc/.uptime:/proc/uptime"
+    proot_command+=" -b "$rootfs_path"/proc/.version:/proc/version"
+    proot_command+=" -b "$rootfs_path"/proc/.vmstat:/proc/vmstat"
 
     echo -e "${GREEN}[Starting x86 environment]${NC}\n"
     $proot_command $exagear_command
