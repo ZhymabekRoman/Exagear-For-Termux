@@ -7,7 +7,7 @@
 
 # Constants
 PROGRAM_NAME="ExaGear for Termux"
-PROGRAM_VERSION="2.1"
+PROGRAM_VERSION="2.2"
 CURRENT_WORK_FOLDER=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 DEFAULT_ROOTFS_FOLDER="exagear-fs"
 
@@ -339,6 +339,13 @@ function start_guest {
         exagear_command="/bin/ubt_x32a32_al_mem3g"
     elif [ "$MEMORY_BITS" = '2g' ]; then
         exagear_command="/bin/ubt_x32a32_al_mem2g"
+    fi
+
+    if [ ! -d "$rootfs_path"/proot_static/ ]; then
+      echo "Git submodule 'proot-static' not found! Try running these commands again:"
+      echo "git submodule init"
+      echo "git submodule update"
+      exit 1
     fi
 
     exagear_command+=" --path-prefix /"$rootfs_path"/"
