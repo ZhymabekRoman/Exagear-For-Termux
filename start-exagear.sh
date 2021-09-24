@@ -15,6 +15,10 @@ DEFAULT_ROOTFS_FOLDER="exagear-fs"
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+# Enable bash strict mode
+# set -euo pipefail
+# IFS=$'\n\t'
+
 # Check whether it is running, in the root or normal environment.
 if [ "$(id -u)" = "0" ]; then
 	echo
@@ -341,7 +345,7 @@ function start_guest {
         exagear_command="/bin/ubt_x32a32_al_mem2g"
     fi
 
-    if [ ! -d "$rootfs_path"/proot_static/ ]; then
+    if [ ! -d "$CURRENT_WORK_FOLDER/bin/proot-static/" ]; then
       echo "Git submodule 'proot-static' not found! Try running these commands again:"
       echo "git submodule init"
       echo "git submodule update"
@@ -368,10 +372,10 @@ function start_guest {
     LD_LIBRARY_PATH=/lib:/usr/lib:/usr/lib/i386-linux-gnu/:/var/lib:/var/lib/dpkg/:/lib/i386-linux-gnu:/usr/local/lib/"
     exagear_command+=" /bin/bash --login "
 
-    proot_command=""$CURRENT_WORK_FOLDER"/bin/proot-static/proot_static"
+    proot_command="$CURRENT_WORK_FOLDER/bin/proot-static/proot_static"
     proot_command+=" -0"
     proot_command+=" --link2symlink"
-    proot_command+=" -r "$CURRENT_WORK_FOLDER"/"
+    proot_command+=" -r $CURRENT_WORK_FOLDER/"
     proot_command+=" -L"
     proot_command+=" --sysvipc"
     proot_command+=" --kill-on-exit"
@@ -380,27 +384,35 @@ function start_guest {
     proot_command+=" -b /proc"
     proot_command+=" -b /dev"
     proot_command+=" -b /storage"
-    proot_command+=" -b "$rootfs_path"/sys/fs/selinux/:/sys/fs/selinux"
-    proot_command+=" -b "$rootfs_path"/tmp/:/dev/shm/"
+    proot_command+=" -b $rootfs_path/sys/fs/selinux/:/sys/fs/selinux"
+    proot_command+=" -b $rootfs_path/tmp/:/dev/shm/"
     proot_command+=" -b /dev/urandom:/dev/random"
     proot_command+=" -w /"
-    proot_command+=" -b "$rootfs_path"/proc/.stat:/proc/stat"
-    proot_command+=" -b "$rootfs_path"/proc/.loadavg:/proc/loadavg"
-    proot_command+=" -b "$rootfs_path"/proc/.uptime:/proc/uptime"
-    proot_command+=" -b "$rootfs_path"/proc/.version:/proc/version"
-    proot_command+=" -b "$rootfs_path"/proc/.vmstat:/proc/vmstat"
+    proot_command+=" -b $rootfs_path/proc/.stat:/proc/stat"
+    proot_command+=" -b $rootfs_path/proc/.loadavg:/proc/loadavg"
+    proot_command+=" -b $rootfs_path/proc/.uptime:/proc/uptime"
+    proot_command+=" -b $rootfs_path/proc/.version:/proc/version"
+    proot_command+=" -b $rootfs_path/proc/.vmstat:/proc/vmstat"
 
     echo -e "${GREEN}[Starting x86 environment]${NC}\n"
     $proot_command $exagear_command
     echo -e "\n${GREEN}[Exit from x86 environment]${NC}\n"
 }
 
+ARG_ACTION="${1:-}"
 
-case "$1" in
-        "") print_welcome_message; start_guest $DEFAULT_ROOTFS_FOLDER;;
-		-h|--help|help|--usage|-dh) shift 1; print_usage_and_exit;;
+
+case "${ARG_ACTION}" in
+        "")
+            print_welcome_message
+            start_guest $DEFAULT_ROOTFS_FOLDER
+            ;;
+		-h|--help|help|--usage|-dh)
+            shift 1
+            print_usage_and_exit
+            ;;
 		*)
-			echo "Error: unknown command '$1'"
+			echo "Error: unknown command '$ARG_ACTION'"
 			exit 1
 			;;
 esac
