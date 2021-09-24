@@ -276,7 +276,26 @@ function setup_fake_proc
 
 
 function start_guest {
-    local rootfs_path=$1
+    local rootfs_path=$DEFAULT_ROOTFS_FOLDER
+    local make_host_tmp_shared=false
+
+	while (($# >= 1)); do
+		case "$1" in
+			--)
+				shift 1
+				break
+				;;
+			--shared-tmp)
+				make_host_tmp_shared=true
+				;;
+            *)
+			echo "Error: unknown parameter '$ARG_ACTION'"
+			exit 1
+			;;
+		esac
+		shift 1
+	done
+
 
     chmod +x "$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem2g "$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem3g "$CURRENT_WORK_FOLDER"/bin/test-memory-available
 
@@ -393,6 +412,9 @@ function start_guest {
     proot_command+=" -b $rootfs_path/proc/.uptime:/proc/uptime"
     proot_command+=" -b $rootfs_path/proc/.version:/proc/version"
     proot_command+=" -b $rootfs_path/proc/.vmstat:/proc/vmstat"
+    if $make_host_tmp_shared; then
+        proot_command+=" -b $PREFIX/tmp/:/tmp/"
+    fi
 
     echo -e "${GREEN}[Starting x86 environment]${NC}\n"
     $proot_command $exagear_command
@@ -400,12 +422,12 @@ function start_guest {
 }
 
 ARG_ACTION="${1:-}"
-
+ARG_PARAMS="${2:-}"
 
 case "${ARG_ACTION}" in
-        "")
+        ""|"login")
             print_welcome_message
-            start_guest $DEFAULT_ROOTFS_FOLDER
+            start_guest $ARG_PARAMS
             ;;
 		-h|--help|help|--usage|-dh)
             shift 1
