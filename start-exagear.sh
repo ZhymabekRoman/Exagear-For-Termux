@@ -156,7 +156,7 @@ function generate_termux_old_env_exec_cmd {
     exagear_command+=" --path-prefix "$rootfs_path""
     exagear_command+=" --vfs-hacks=tlsasws,tsi,spd"
     exagear_command+=" --vfs-kind guest-first"
-    exagear_command+=" --vpaths-list "$CURRENT_WORK_FOLDER"/bin/vpaths-list"
+    exagear_command+=" --vpaths-list "$CURRENT_WORK_FOLDER"/bin/vpaths-list-old"
     exagear_command+=" --tmp-dir "$rootfs_path"/tmp"
     exagear_command+=" -- /usr/bin/env -i
     USER=root
@@ -451,7 +451,7 @@ function start_guest {
                 old_termux_exec_cmd=true
                 ;;
             *)
-			echo "Error: unknown parameter '$ARG_ACTION'"
+			echo "Error: unknown parameter: '$1'"
 			exit 1
 			;;
 		esac
