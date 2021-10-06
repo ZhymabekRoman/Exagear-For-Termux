@@ -8,8 +8,13 @@ Exagear is a new virtualization technology that enables Intel x86 applications t
 
 ## Features
 * Support for System V IPC and POSIX IPC
-* High speed and stable translating instructions
+* High stable translating instructions
 * Quickly and easily deploy x86 systems
+
+## Issues
+* Exagear For Termux is too slow.
+
+Every process is hooked through ptrace(), so PRoot can hijack the system call arguments and return values. This is typically used to translate file paths so traced program will see the different file system layout. If you want to play games then please use Exagear Windows/RPG/Strategy
 
 ## Installation
 ### In Termux:
