@@ -21,10 +21,10 @@ set -euo pipefail
 
 # Check whether it is running, in the root or normal environment.
 if [ "$(id -u)" = "0" ]  && [ "$(uname -o)" = "Android" ]; then
-	echo
-	echo -e "Error: '${PROGRAM_NAME}' should not be used as root."
-	echo
-	exit 1
+    echo
+    echo -e "Error: '${PROGRAM_NAME}' should not be used as root."
+    echo
+    exit 1
 fi
 
 # Check memory configuration
@@ -202,9 +202,9 @@ function generate_termux_old_env_exec_cmd {
 
 function edit_passwd
 {
-	local rootfs_path="$1"
+    local rootfs_path="$1"
 
-	cat <<- EOF > ""$rootfs_path"/etc/passwd"
+    cat <<- EOF > ""$rootfs_path"/etc/passwd"
 	root:x:0:0:root:/root:/bin/bash
 	daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
 	bin:x:2:2:bin:/bin:/usr/sbin/nologin
@@ -239,24 +239,24 @@ function setup_fake_proc
 {
     local rootfs_path="$1"
 
-	mkdir -p ""$rootfs_path"/proc"
-	chmod 700 ""$rootfs_path"/proc"
+    mkdir -p ""$rootfs_path"/proc"
+    chmod 700 ""$rootfs_path"/proc"
     mkdir -p ""$rootfs_path"/sys/fs/selinux/"
 
-	if [ ! -f ""$rootfs_path"/sys/fs/selinux/enforce" ]; then
-		cat <<- EOF > ""$rootfs_path"/sys/fs/selinux/enforce"
+    if [ ! -f ""$rootfs_path"/sys/fs/selinux/enforce" ]; then
+        cat <<- EOF > ""$rootfs_path"/sys/fs/selinux/enforce"
 		0
 		EOF
-	fi
+    fi
 
-	if [ ! -f ""$rootfs_path"/proc/.loadavg" ]; then
-		cat <<- EOF > ""$rootfs_path"/proc/.loadavg"
+    if [ ! -f ""$rootfs_path"/proc/.loadavg" ]; then
+        cat <<- EOF > ""$rootfs_path"/proc/.loadavg"
 		0.54 0.41 0.30 1/931 370386
 		EOF
-	fi
+    fi
 
-	if [ ! -f ""$rootfs_path"/proc/.stat" ]; then
-		cat <<- EOF > ""$rootfs_path"/proc/.stat"
+    if [ ! -f ""$rootfs_path"/proc/.stat" ]; then
+        cat <<- EOF > ""$rootfs_path"/proc/.stat"
 		cpu  1050008 127632 898432 43828767 37203 63 99244 0 0 0
 		cpu0 212383 20476 204704 8389202 7253 42 12597 0 0 0
 		cpu1 224452 24947 215570 8372502 8135 4 42768 0 0 0
@@ -272,22 +272,22 @@ function setup_fake_proc
 		procs_blocked 0
 		softirq 25293348 2883 7658936 40779 539155 497187 2864 1908702 7229194 279723 7133925
 		EOF
-	fi
+    fi
 
-	if [ ! -f ""$rootfs_path"/proc/.uptime" ]; then
-		cat <<- EOF > ""$rootfs_path"/proc/.uptime"
+    if [ ! -f ""$rootfs_path"/proc/.uptime" ]; then
+        cat <<- EOF > ""$rootfs_path"/proc/.uptime"
 		284684.56 513853.46
 		EOF
-	fi
+    fi
 
-	if [ ! -f ""$rootfs_path"/proc/.version" ]; then
-		cat <<- EOF > ""$rootfs_path"/proc/.version"
+    if [ ! -f ""$rootfs_path"/proc/.version" ]; then
+        cat <<- EOF > ""$rootfs_path"/proc/.version"
 		Linux version 5.4.0-faked (termux@androidos) (gcc version 4.9.x (Faked /proc/version by Exagear-For-Termux) ) #1 SMP PREEMPT Fri Jul 10 00:00:00 UTC 2020
 		EOF
-	fi
+    fi
 
-	if [ ! -f ""$rootfs_path"/proc/.vmstat" ]; then
-		cat <<- EOF > ""$rootfs_path"/proc/.vmstat"
+    if [ ! -f ""$rootfs_path"/proc/.vmstat" ]; then
+        cat <<- EOF > ""$rootfs_path"/proc/.vmstat"
 		nr_free_pages 146031
 		nr_zone_inactive_anon 196744
 		nr_zone_active_anon 301503
@@ -427,7 +427,7 @@ function setup_fake_proc
 		swap_ra 9661
 		swap_ra_hit 7872
 		EOF
-	fi
+    fi
 }
 
 
@@ -438,33 +438,33 @@ function start_guest {
 
     local exec_cmd="None"
 
-	while (($# >= 1)); do
-		case "$1" in
-			--)
-				shift 1
-				break
-				;;
-			--shared-tmp)
-				make_host_tmp_shared=true
-				;;
+    while (($# >= 1)); do
+        case "$1" in
+            --)
+                shift 1
+                break
+                ;;
+            --shared-tmp)
+                make_host_tmp_shared=true
+                ;;
             --old)
                 old_termux_exec_cmd=true
                 ;;
             *)
-			echo "Error: unknown parameter: '$1'"
-			exit 1
-			;;
-		esac
-		shift 1
-	done
+                echo "Error: unknown parameter: '$1'"
+                exit 1
+                ;;
+        esac
+        shift 1
+    done
 
 
     chmod +x "$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem2g "$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem3g "$CURRENT_WORK_FOLDER"/bin/test-memory-available
 
     # Check the integrity of the guest system
     if [ ! -d "$rootfs_path"/bin/ ]; then
-      echo -e "Folder 'bin' in guest system not found. The guest system is likely damaged\n"
-      exit
+        echo -e "Folder 'bin' in guest system not found. The guest system is likely damaged\n"
+        exit
     fi
 
     case `cat "$rootfs_path"/etc/passwd` in
@@ -473,7 +473,7 @@ function start_guest {
             edit_passwd "$rootfs_path" ;;
         "")
             echo "'passwd' file in guest system not found. Exiting"
-	        exit 1;;
+            exit 1 ;;
     esac
 
     # unset LD_PRELOAD in case termux-exec is installed
@@ -489,20 +489,20 @@ function start_guest {
 
     # Check the storage and dev folders exists
     if [ ! -d "$rootfs_path"/storage/ ]; then
-      echo -e "Folder 'storage' in guest system not found. Creating....\n"
-      mkdir $rootfs_path/storage/
+        echo -e "Folder 'storage' in guest system not found. Creating....\n"
+        mkdir $rootfs_path/storage/
     fi
     if [ ! -d "$rootfs_path"/dev/ ]; then
-      echo -e "Folder 'dev' in guest system not found. Creating....\n"
-      mkdir $rootfs_path/dev/
+        echo -e "Folder 'dev' in guest system not found. Creating....\n"
+        mkdir $rootfs_path/dev/
     fi
     if [ ! -d "$rootfs_path"/proc/ ]; then
-      echo -e "Folder 'proc' in guest system not found. Creating....\n"
-      mkdir $rootfs_path/proc/
+        echo -e "Folder 'proc' in guest system not found. Creating....\n"
+        mkdir $rootfs_path/proc/
     fi
     if [ ! -d "$rootfs_path"/sys/ ]; then
-      echo -e "Folder 'sys' in guest system not found. Creating....\n"
-      mkdir $rootfs_path/sys/
+        echo -e "Folder 'sys' in guest system not found. Creating....\n"
+        mkdir $rootfs_path/sys/
     fi
 
 
@@ -514,10 +514,10 @@ function start_guest {
     echo -e "System memory configuration is determined as ${MEMORY_BITS}\n"
 
     if [ ! -d "${CURRENT_WORK_FOLDER}/bin/proot-static/" ]; then
-      echo "Git submodule 'proot-static' not found! Try running these commands again:"
-      echo "git submodule init"
-      echo "git submodule update"
-      exit 1
+        echo "Git submodule 'proot-static' not found! Try running these commands again:"
+        echo "git submodule init"
+        echo "git submodule update"
+        exit 1
     fi
 
     if [ "$(uname -o)" = "Android" ]; then
@@ -532,7 +532,6 @@ function start_guest {
 
 
     echo -e "${GREEN}[Starting x86 environment]${NC}\n"
-    # echo "$exec_cmd"
     exec ${exec_cmd}
     echo -e "\n${GREEN}[Exit from x86 environment]${NC}\n"
 }
@@ -541,21 +540,21 @@ ARG_ACTION="${1:-}"
 ARG_PARAMS="${@:2}"
 
 case "${ARG_ACTION}" in
-        "login")
-            print_welcome_message
-            start_guest $ARG_PARAMS
-            ;;
-        "")
-            echo -e "${RED}WARNING: starting the utility start-exagear.sh without parameters is DEPRECATED! Running without parameters WILL BE REMOVED in version 3.0. \n\nNew comand line syntax: start-exagear.sh login <PARAMETERS>${NC}"
-            print_welcome_message
-            start_guest $ARG_PARAMS
-            ;;
-		-h|--help|help|--usage|-dh)
-            shift 1
-            print_usage_and_exit
-            ;;
-		*)
-			echo "Error: unknown command '$ARG_ACTION'"
-			exit 1
-			;;
+    "login")
+        print_welcome_message
+        start_guest $ARG_PARAMS
+        ;;
+    "")
+        echo -e "${RED}WARNING: starting the utility start-exagear.sh without parameters is DEPRECATED! Running without parameters WILL BE REMOVED in version 3.0. \n\nNew comand line syntax: start-exagear.sh login <PARAMETERS>${NC}"
+        print_welcome_message
+        start_guest $ARG_PARAMS
+        ;;
+    -h|--help|help|--usage|-dh)
+        shift 1
+        print_usage_and_exit
+        ;;
+    *)
+        echo "Error: unknown command '${ARG_ACTION}'"
+        exit 1
+        ;;
 esac
