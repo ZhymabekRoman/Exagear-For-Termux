@@ -7,7 +7,7 @@
 
 # Constants
 PROGRAM_NAME="ExaGear for Termux"
-PROGRAM_VERSION="2.3"
+PROGRAM_VERSION="2.4"
 CURRENT_WORK_FOLDER=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 DEFAULT_ROOTFS_FOLDER="exagear-fs/"
 
@@ -22,7 +22,15 @@ set -euo pipefail
 # Check whether it is running, in the root or normal environment.
 if [ "$(id -u)" = "0" ]  && [ "$(uname -o)" = "Android" ]; then
     echo
-    echo -e "Error: '${PROGRAM_NAME}' should not be used as root."
+    echo -e "${RED}Error: '${PROGRAM_NAME}' should not be used as root.${NC}"
+    echo
+    exit 1
+fi
+
+arch=$(dpkg --print-architecture)
+if ! [[ $arch == arm* ]] && ! [[ $arch = aarch64 ]]; then
+    echo
+    echo -e "${RED}Error: Exagear can only be started on systems with arm processors.${NC}"
     echo
     exit 1
 fi
@@ -522,11 +530,14 @@ function start_guest {
 
     if [ "$(uname -o)" = "Android" ]; then
         if $old_termux_exec_cmd; then
+            echo -e "Your environment is defined as Termux (executed with --old flag)\n"
             generate_termux_old_env_exec_cmd "$rootfs_path" "$make_host_tmp_shared"
         else
+            echo -e "Your environment is defined as Termux\n"
             generate_termux_env_exec_cmd "$rootfs_path" "$make_host_tmp_shared"
         fi
     else
+        echo -e "Your environment is defined as proot\n"
         generate_proot_env_exec_cmd "$rootfs_path" "$make_host_tmp_shared"
     fi
 
