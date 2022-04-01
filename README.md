@@ -32,10 +32,11 @@ cd ~/ExaTermux
 git submodule init
 git submodule update
 ```
-4) Now let's download and unpack for example rootfs of Debian 10 system to exagear-fs folder. It is in this folder that unpacked distribution images should be stored:
+4) Now you need to extract any rootfs archive of the distribution into the exagear-fs folder. For example, let's take and extract the Debian 11 archive that came with proot-distro:
 ```
-wget https://github.com/termux/proot-distro/releases/download/v1.1-debian-rootfs/debian-buster-i386-2020.12.05.tar.gz
-mkdir exagear-fs/ && tar -C exagear-fs/ --warning=no-unknown-keyword --delay-directory-restore --preserve-permissions --strip=0 -xvf debian-buster-i386-2020.12.05.tar.gz --exclude='dev'||: && cd exagear-fs/ && mv debian-buster-i386-2020.12.05/* ./ && rm -rfv debian-buster-i386-2020.12.05/ && cd ../
+mkdir exagear-fs/
+wget https://github.com/termux/proot-distro/releases/download/v2.2.0/debian-i686-pd-v2.2.0.tar.xz
+tar -C exagear-fs/ --warning=no-unknown-keyword --delay-directory-restore --preserve-permissions -xvf debian-i686-pd-v2.2.0.tar.xz --exclude='dev'||:
 ```
 5) Done. Let's start Exagear-For-Termux
 ```

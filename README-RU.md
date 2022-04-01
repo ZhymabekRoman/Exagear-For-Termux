@@ -27,10 +27,11 @@ cd ~/ExaTermux
 git submodule init
 git submodule update
 ```
-4) Давайте загрузим и распакуем в папку exagear-fs, например, rootfs образ системы Debian 10. Именно в этой папке должны храниться распакованные образы дистрибутивов на основе ядра Linux:
+4) Теперь вам нужно распаковать любой rootfs архив дистрибутива в папку exagear-fs. К примеру, давайте мы возьмем и распакуем архив Debian 11 поставляемый с proot-distro:
 ```
-wget https://github.com/termux/proot-distro/releases/download/v1.1-debian-rootfs/debian-buster-i386-2020.12.05.tar.gz
-mkdir exagear-fs/ && tar -C exagear-fs/ --warning=no-unknown-keyword --delay-directory-restore --preserve-permissions --strip=0 -xvf debian-buster-i386-2020.12.05.tar.gz --exclude='dev'||: && cd exagear-fs/ && mv debian-buster-i386-2020.12.05/* ./ && rm -rfv debian-buster-i386-2020.12.05/ && cd ../
+mkdir exagear-fs/
+wget https://github.com/termux/proot-distro/releases/download/v2.2.0/debian-i686-pd-v2.2.0.tar.xz
+tar -C exagear-fs/ --warning=no-unknown-keyword --delay-directory-restore --preserve-permissions -xvf debian-i686-pd-v2.2.0.tar.xz --exclude='dev'||:
 ```
 5) Готово. Давайте запустим наконец-то Exagear-For-Termux
 ```
