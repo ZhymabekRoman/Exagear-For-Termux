@@ -20,7 +20,7 @@ Every process is hooked through ptrace(), so PRoot can hijack the system call ar
 ### In Termux:
 1) Install tar and git:
 ```
-pkg update -y && pkg install tar git -y
+pkg update -y && pkg install tar git wget -y
 ```
 2) Clone this repository to home directory:
 ```
