@@ -1,5 +1,3 @@
-### Choose a language / Выберите язык: English / [Русский](https://github.com/ZhymabekRoman/Exagear-For-Termux/blob/master/README-RU.md)
-
 # Exagear For Termux
 **Exagear For Termux** - Non official modified version of Exagear for Termux and proot based environemnts - Anlinux, AndroNix, UserLand and etc. The main goal of the project is to achieve the possibility of a stable and fast replacement of QEMU user mode + proot, which is very slow and not stable.
 
