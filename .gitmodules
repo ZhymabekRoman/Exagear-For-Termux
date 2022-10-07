@@ -1,3 +1,6 @@
 [submodule "bin/proot-static"]
 	path = bin/proot-static
 	url = https://github.com/ZhymabekRoman/proot-static
+[submodule "bin/exagear-binary-x86"]
+	path = bin/exagear-binary-x86
+	url = https://github.com/ZhymabekRoman/exagear-binary-x86

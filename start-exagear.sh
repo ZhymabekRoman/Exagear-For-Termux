@@ -35,12 +35,6 @@ if ! [[ $arch == arm* ]] && ! [[ $arch = aarch64 ]]; then
     exit 1
 fi
 
-# Check memory configuration
-if ./bin/test-memory-available  0xa0000000 ; then
-    MEMORY_BITS="3g"
-else
-    MEMORY_BITS="2g"
-fi
 
 function print_welcome_message {
     echo -e "
@@ -64,9 +58,9 @@ function generate_proot_env_exec_cmd {
     local make_host_tmp_shared="$2"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
-        exagear_command="./bin/ubt_x32a32_al_mem3g"
+        exagear_command="./bin/exagear-binary-x86/ubt_x32a32_al_mem3g"
     elif [ "$MEMORY_BITS" = '2g' ]; then
-        exagear_command="./bin/ubt_x32a32_al_mem2g"
+        exagear_command="./bin/exagear-binary-x86/ubt_x32a32_al_mem2g"
     fi
 
     exagear_command+=" --path-prefix "$rootfs_path""
@@ -97,9 +91,9 @@ function generate_termux_env_exec_cmd {
     local make_host_tmp_shared="$2"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
-        exagear_command="/bin/ubt_x32a32_al_mem3g"
+        exagear_command="/bin/exagear-binary-x86/ubt_x32a32_al_mem3g"
     elif [ "$MEMORY_BITS" = '2g' ]; then
-        exagear_command="/bin/ubt_x32a32_al_mem2g"
+        exagear_command="/bin/exagear-binary-x86/ubt_x32a32_al_mem2g"
     fi
 
     exagear_command+=" --path-prefix /"$rootfs_path""
@@ -156,9 +150,9 @@ function generate_termux_old_env_exec_cmd {
     local make_host_tmp_shared="$2"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
-        exagear_command="./bin/ubt_x32a32_al_mem3g"
+        exagear_command="./bin/exagear-binary-x86/ubt_x32a32_al_mem3g"
     elif [ "$MEMORY_BITS" = '2g' ]; then
-        exagear_command="./bin/ubt_x32a32_al_mem2g"
+        exagear_command="./bin/exagear-binary-x86/ubt_x32a32_al_mem2g"
     fi
 
     exagear_command+=" --path-prefix "$rootfs_path""
@@ -466,8 +460,28 @@ function start_guest {
         shift 1
     done
 
+    if [ ! -d "${CURRENT_WORK_FOLDER}/bin/proot-static/" ]; then
+        echo "Git submodule 'proot-static' not found! Run these commands:"
+        echo "git submodule init"
+        echo "git submodule update"
+        exit 1
+    fi
 
-    chmod +x "$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem2g "$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem3g "$CURRENT_WORK_FOLDER"/bin/test-memory-available
+    if [ ! -d "${CURRENT_WORK_FOLDER}/bin/exagear-binary-x86/" ]; then
+        echo "Git submodule 'exagear-binary-x86' not found! Run these commands:"
+        echo "git submodule init"
+        echo "git submodule update"
+        exit 1
+    fi
+
+    # Check memory configuration
+    if ./bin/exagear-binary-x86/test-memory-available 0xa0000000 ; then
+        MEMORY_BITS="3g"
+    else
+        MEMORY_BITS="2g"
+    fi
+
+    echo -e "System memory configuration is determined as ${MEMORY_BITS}\n"
 
     # Check the integrity of the guest system
     if [ ! -d "$rootfs_path"/bin/ ]; then
@@ -513,20 +527,12 @@ function start_guest {
         mkdir $rootfs_path/sys/
     fi
 
-
     # This step is only needed for Ubuntu to prevent Group error
     touch "$rootfs_path"/root/.hushlogin
 
     setup_fake_proc "$CURRENT_WORK_FOLDER"/"$rootfs_path"/
 
-    echo -e "System memory configuration is determined as ${MEMORY_BITS}\n"
-
-    if [ ! -d "${CURRENT_WORK_FOLDER}/bin/proot-static/" ]; then
-        echo "Git submodule 'proot-static' not found! Try running these commands again:"
-        echo "git submodule init"
-        echo "git submodule update"
-        exit 1
-    fi
+    
 
     if [ "$(uname -o)" = "Android" ]; then
         if $old_termux_exec_cmd; then
