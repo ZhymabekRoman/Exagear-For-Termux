@@ -16,7 +16,7 @@ Every process is hooked through ptrace(), so PRoot can hijack the system call ar
 
 * `FATAL: attempted to create non-posix thread; clone_flags == 00004111`
 
-A critical error, which at the moment there is no explanation - because of what and how to solve it. If you have a solution, please join the discussion - #16
+A critical error, which at the moment there is no explanation - because of what and how to solve it. If you have a solution, please join the discussion - [FATAL: attempted to create non-posix thread; clone_flags == 00004111](https://github.com/ZhymabekRoman/Exagear-For-Termux/issues/16)
 
 ## Installation
 1) Install `tar`, `wget` and `git` using Termux's package manager (`pkg`):
