@@ -7,11 +7,13 @@
 
 # Constants
 PROGRAM_NAME="ExaGear for Termux"
-PROGRAM_VERSION="2.4"
-CURRENT_WORK_FOLDER=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-DEFAULT_ROOTFS_FOLDER="exagear-fs/"
+PROGRAM_VERSION="2.5-beta"
+CURRENT_WORK_FOLDER="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd)"
+DEFAULT_ROOTFS_FOLDER="exagear-fs"
+DEFAULT_ROOTFS_FOLDER_PATH="${CURRENT_WORK_FOLDER}/${DEFAULT_ROOTFS_FOLDER}"
 
 # Colors
+PURPLE='\033[0;33m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
@@ -22,7 +24,7 @@ set -euo pipefail
 # Check whether it is running, in the root or normal environment.
 if [ "$(id -u)" = "0" ]  && [ "$(uname -o)" = "Android" ]; then
     echo
-    echo -e "${RED}Error: '${PROGRAM_NAME}' should not be used as root.${NC}"
+    echo -e "${RED}Error: '${PROGRAM_NAME}' should not be used as root. Exit...${NC}"
     echo
     exit 1
 fi
@@ -30,11 +32,15 @@ fi
 arch=$(dpkg --print-architecture)
 if ! [[ $arch == arm* ]] && ! [[ $arch = aarch64 ]]; then
     echo
-    echo -e "${RED}Error: Exagear can only be started on systems with arm processors.${NC}"
+    echo -e "${RED}Error: Exagear can only be started on systems with arm processors. Exit...${NC}"
     echo
     exit 1
 fi
 
+function msg {
+    local msg="${1}"
+    echo -e "${msg}"
+}
 
 function print_welcome_message {
     echo -e "
@@ -42,10 +48,12 @@ function print_welcome_message {
     ░░▀█░█▀▀░█░█░█▀█
     ░░░▀░▀░░░▀▀░░▀░▀
     "
-    echo "${PROGRAM_NAME} by Zhymabek_Roman"
-    echo "Version: ${PROGRAM_VERSION}"
-    echo -e "Copyright (c) 2013-2019 'Elbrus Technologies' LLC. All rights reserved.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
-    echo -e "\n"
+    msg "${PROGRAM_NAME} by Zhymabek_Roman"
+    msg "Version: ${PROGRAM_VERSION}"
+    msg ""
+    msg "Copyright (c) 2013-2019 'Elbrus Technologies' LLC. All rights reserved."
+    msg "This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+    msg ""
 }
 
 function print_usage_and_exit {
@@ -54,13 +62,13 @@ function print_usage_and_exit {
 }
 
 function generate_proot_env_exec_cmd {
-    local rootfs_path="${CURRENT_WORK_FOLDER}/${1}"
+    local rootfs_path="$1"
     local make_host_tmp_shared="$2"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
-        exagear_command="./bin/exagear-binary-x86/ubt_x32a32_al_mem3g"
+        exagear_command=""$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem3g"
     elif [ "$MEMORY_BITS" = '2g' ]; then
-        exagear_command="./bin/exagear-binary-x86/ubt_x32a32_al_mem2g"
+        exagear_command=""$CURRENT_WORK_FOLDER"/bin/ubt_x32a32_al_mem2g"
     fi
 
     exagear_command+=" --path-prefix "$rootfs_path""
@@ -96,11 +104,11 @@ function generate_termux_env_exec_cmd {
         exagear_command="/bin/exagear-binary-x86/ubt_x32a32_al_mem2g"
     fi
 
-    exagear_command+=" --path-prefix /"$rootfs_path""
+    exagear_command+=" --path-prefix ${DEFAULT_ROOTFS_FOLDER}"
     exagear_command+=" --vfs-hacks=tlsasws,tsi,spd"
     exagear_command+=" --vfs-kind guest-first"
     exagear_command+=" --vpaths-list /bin/vpaths-list"
-    exagear_command+=" --tmp-dir /"$rootfs_path"/tmp"
+    exagear_command+=" --tmp-dir ${DEFAULT_ROOTFS_FOLDER}/tmp"
     exagear_command+=" -- /usr/bin/env -i
     USER=root
     HOME=/root
@@ -128,6 +136,7 @@ function generate_termux_env_exec_cmd {
     proot_command+=" -b /proc"
     proot_command+=" -b /dev"
     proot_command+=" -b /storage"
+    proot_command+=" -b ${rootfs_path}:/exagear-fs/"
     proot_command+=" -b $rootfs_path/sys/fs/selinux/:/sys/fs/selinux"
     proot_command+=" -b $rootfs_path/tmp/:/dev/shm/"
     proot_command+=" -b /dev/urandom:/dev/random"
@@ -146,7 +155,7 @@ function generate_termux_env_exec_cmd {
 }
 
 function generate_termux_old_env_exec_cmd {
-    local rootfs_path="${CURRENT_WORK_FOLDER}/${1}"
+    local rootfs_path="$1"
     local make_host_tmp_shared="$2"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
@@ -434,7 +443,7 @@ function setup_fake_proc
 
 
 function start_guest {
-    local rootfs_path=$DEFAULT_ROOTFS_FOLDER
+    local rootfs_path=$DEFAULT_ROOTFS_FOLDER_PATH
     local make_host_tmp_shared=false
     local old_termux_exec_cmd=false
 
@@ -483,6 +492,13 @@ function start_guest {
 
     echo -e "System memory configuration is determined as ${MEMORY_BITS}\n"
 
+    # Check memory configuration
+    if ""$CURRENT_WORK_FOLDER"/bin/test-memory-available" 0xa0000000 ; then
+        MEMORY_BITS="3g"
+    else
+        MEMORY_BITS="2g"
+    fi
+
     # Check the integrity of the guest system
     if [ ! -d "$rootfs_path"/bin/ ]; then
         echo -e "Folder 'bin' in guest system not found. The guest system is likely damaged\n"
@@ -530,9 +546,7 @@ function start_guest {
     # This step is only needed for Ubuntu to prevent Group error
     touch "$rootfs_path"/root/.hushlogin
 
-    setup_fake_proc "$CURRENT_WORK_FOLDER"/"$rootfs_path"/
-
-    
+    setup_fake_proc "$rootfs_path"
 
     if [ "$(uname -o)" = "Android" ]; then
         if $old_termux_exec_cmd; then
@@ -549,7 +563,7 @@ function start_guest {
 
 
     echo -e "${GREEN}[Starting x86 environment]${NC}\n"
-    exec ${exec_cmd}
+    ${exec_cmd}
     echo -e "\n${GREEN}[Exit from x86 environment]${NC}\n"
 }
 
