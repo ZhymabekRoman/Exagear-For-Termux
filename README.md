@@ -1,5 +1,5 @@
 # Exagear For Termux
-**Exagear For Termux** - Non official modified version of Exagear for Termux and proot based environemnts - Anlinux, AndroNix, UserLand and etc. The main goal of the project is to achieve the possibility of a stable and fast replacement of QEMU user mode + proot, which is very slow and not stable.
+**Exagear For Termux** - Non official modified version of Exagear for Termux and proot based environemnts - Anlinux, AndroNix, UserLand and etc. The main goal of the project is to achieve the possibility of a stable and fast replacement of QEMU user mode with proot, which is very slow and not stable. No root access required.
 
 ## What is Exagear?
 Exagear is a virtualization technology makes it possible to run Intel x86 applications on ARM-based devices. You can even run Windows applications on your ARM device if you install Wine. Eltechs solution is being developed since the project launch in 2012 and was discontinued in 2019, but was again [resumed in 2020 under the Huawei brand](https://www.huaweicloud.com/kunpeng/software/exagear.html) and can already run x86_64 applications on ARM64 devices.
@@ -10,7 +10,7 @@ Exagear is a virtualization technology makes it possible to run Intel x86 applic
 * High stable translating instructions
 
 ## Issues
-* Exagear For Termux is too slow.
+* Exagear For Termux is too slow, compared to Exagear Windows, but much faster than proot with QEMU
 
 Every process is hooked through ptrace(), so PRoot can hijack the system call arguments and return values. This is typically used to translate file paths so traced program will see the different file system layout. If you want to play games then please use Exagear Windows/RPG/Strategy
 
