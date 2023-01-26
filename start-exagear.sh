@@ -19,6 +19,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 # Enable bash strict mode
+# TODO: seems to be it's not working!
 set -euo pipefail
 
 # Check whether it is running, in the root or normal environment.
@@ -43,7 +44,7 @@ function msg {
 }
 
 function print_welcome_message {
-    echo -e "
+    msg "
     ░█░█░█▀█░█▀▄░█▀█
     ░░▀█░█▀▀░█░█░█▀█
     ░░░▀░▀░░░▀▀░░▀░▀
@@ -64,6 +65,7 @@ function print_usage_and_exit {
 function generate_proot_env_exec_cmd {
     local rootfs_path="${1}"
     local make_host_tmp_shared="${2}"
+    local sysv_ipc="${3}"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
         exagear_command="${CURRENT_WORK_FOLDER}/bin/exagear-binary-x86/ubt_x32a32_al_mem3g"
@@ -97,6 +99,7 @@ function generate_proot_env_exec_cmd {
 function generate_termux_env_exec_cmd {
     local rootfs_path="${1}"
     local make_host_tmp_shared="${2}"
+    local sysv_ipc="${3}"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
         exagear_command="/bin/exagear-binary-x86/ubt_x32a32_al_mem3g"
@@ -129,7 +132,9 @@ function generate_termux_env_exec_cmd {
     proot_command+=" --link2symlink"
     proot_command+=" -r ${CURRENT_WORK_FOLDER}/"
     proot_command+=" -L"
-    proot_command+=" --sysvipc"
+    if [ "${sysv_ipc}" = true ]; then
+            proot_command+=" --sysvipc"
+    fi
     proot_command+=" --kill-on-exit"
     proot_command+=" --kernel-release=5.4.0-fake-kernel"
     proot_command+=" -b /sys"
@@ -157,6 +162,7 @@ function generate_termux_env_exec_cmd {
 function generate_termux_old_env_exec_cmd {
     local rootfs_path="${1}"
     local make_host_tmp_shared="${2}"
+    local sysv_ipc="${3}"
 
     if [ "$MEMORY_BITS" = '3g' ]; then
         exagear_command="${CURRENT_WORK_FOLDER}/bin/exagear-binary-x86/ubt_x32a32_al_mem3g"
@@ -188,8 +194,9 @@ function generate_termux_old_env_exec_cmd {
     proot_command+=" -0"
     proot_command+=" --link2symlink"
     proot_command+=" -L"
-    proot_command+=" --sysvipc"
-    proot_command+=" --kill-on-exit"
+    if [ "${sysv_ipc}" = true ]; then
+            proot_command+=" --sysvipc"
+    fi
     proot_command+=" --kernel-release=5.4.0-fake-kernel"
     proot_command+=" -b /sys:${rootfs_path}/sys"
     proot_command+=" -b /proc:${rootfs_path}/proc"
@@ -232,8 +239,11 @@ function setup_fake_proc
 
 function start_guest {
     local rootfs_path="${DEFAULT_ROOTFS_FOLDER_PATH}"
+
     local make_host_tmp_shared=false
     local old_termux_exec_cmd=false
+    local sysv_ipc=true
+
     local exec_cmd
 
     while (($# >= 1)); do
@@ -255,6 +265,9 @@ function start_guest {
             --old)
                 old_termux_exec_cmd=true
                 ;;
+            --no-sysv-ipc)
+                    sysv_ipc=false
+                    ;;
             *)
                 msg "${RED}Error: unknown parameter: '$1'${NC}"
                 exit 1
@@ -263,14 +276,14 @@ function start_guest {
         shift 1
     done
 
-    if [ ! -d "${CURRENT_WORK_FOLDER}/bin/proot-static/" ]; then
+    if [ ! -d "${CURRENT_WORK_FOLDER}/bin/proot-static/" ] || [ -z "$(ls -A "${CURRENT_WORK_FOLDER}"/bin/proot-static)" ]; then
         echo "Git submodule 'proot-static' not found! Run these commands:"
         echo "git submodule init"
         echo "git submodule update"
         exit 1
     fi
 
-    if [ ! -d "${CURRENT_WORK_FOLDER}/bin/exagear-binary-x86/" ]; then
+    if [ ! -d "${CURRENT_WORK_FOLDER}/bin/exagear-binary-x86/"  ] || [ -z "$(ls -A "${CURRENT_WORK_FOLDER}"/bin/exagear-binary-x86)" ]; then
         echo "Git submodule 'exagear-binary-x86' not found! Run these commands:"
         echo "git submodule init"
         echo "git submodule update"
@@ -284,10 +297,10 @@ function start_guest {
         MEMORY_BITS="2g"
     fi
 
-    echo -e "System memory configuration is determined as ${MEMORY_BITS}\n"
+    msg "System memory configuration is determined as ${MEMORY_BITS}\n"
 
-    if [ ! -d "${rootfs_path}" ]; then
-        msg "Guest rootfs '$(basename "${rootfs_path}")' folder not found. Exit..."
+    if [ ! -d "${rootfs_path}" ] || [ -z "$(ls -A "${rootfs_path}")" ]; then
+        msg "Guest rootfs '$(basename "${rootfs_path}")' folder not found or empty. Exit..."
         exit 1
     fi
 
@@ -302,8 +315,7 @@ function start_guest {
             msg "ExaGear Windows/RPG/Strategy's rootfs image detected. Editing 'passwd' for better compatibility"
             edit_passwd "${rootfs_path}" ;;
         "")
-            echo "'passwd' file in guest system not found. Exit..."
-            exit 1 ;;
+            msg "'passwd' file in guest system not found. Ignoring..."
     esac
 
     # unset LD_PRELOAD in case termux-exec is installed
@@ -312,7 +324,7 @@ function start_guest {
     unset LD_PRELOAD
 
     # /etc/resolv.conf and /etc/hosts may not be configured, so write in it our configuraton.
-    echo -e "Writing resolv.conf file (NS 8.8.8.8/8.8.4.4)...\n"
+    msg "Writing resolv.conf file (NS 8.8.8.8/8.8.4.4)..."
     echo "127.0.0.1 localhost" > "$rootfs_path"/etc/hosts
     echo "nameserver 8.8.8.8" > "$rootfs_path"/etc/resolv.conf
     echo "nameserver 8.8.4.4" >> "$rootfs_path"/etc/resolv.conf
@@ -343,14 +355,14 @@ function start_guest {
     if [ "$(uname -o)" = "Android" ]; then
         if $old_termux_exec_cmd; then
             echo -e "Your environment is defined as Termux (executed with --old flag)\n"
-            generate_termux_old_env_exec_cmd "$rootfs_path" "$make_host_tmp_shared"
+            generate_termux_old_env_exec_cmd "${rootfs_path}" "${make_host_tmp_shared}" "${sysv_ipc}"
         else
             echo -e "Your environment is defined as Termux\n"
-            generate_termux_env_exec_cmd "$rootfs_path" "$make_host_tmp_shared"
+            generate_termux_env_exec_cmd "${rootfs_path}" "${make_host_tmp_shared}" "${sysv_ipc}"
         fi
     else
         echo -e "Your environment is defined as proot\n"
-        generate_proot_env_exec_cmd "$rootfs_path" "$make_host_tmp_shared"
+        generate_proot_env_exec_cmd "${rootfs_path}" "${make_host_tmp_shared}" "${sysv_ipc}"
     fi
 
     echo -e "${GREEN}[Starting x86 environment]${NC}\n"
