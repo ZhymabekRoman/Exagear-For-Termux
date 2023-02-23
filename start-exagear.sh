@@ -36,7 +36,7 @@ fi
 arch=$(dpkg --print-architecture)
 if ! [[ $arch == arm* ]] && ! [[ $arch = aarch64 ]]; then
 	echo
-	echo -e "${RED}Error: Exagear can only be started on systems with arm processors. Exit...${NC}"
+	echo -e "${RED}Error: Exagear can only be started on systems with ARM processors. Exit...${NC}"
 	echo
 	exit 1
 fi
@@ -53,7 +53,7 @@ function print_welcome_message {
     ░░░▀░▀░░░▀▀░░▀░▀
     "
 	msg "${PROGRAM_NAME} by Zhymabek_Roman"
-	msg "Version: ${PROGRAM_VERSION}"
+	msg "Version: ${PROGRAM_VERSION}, 2021-2023"
 	msg ""
 	msg "Copyright (c) 2013-2019 'Elbrus Technologies' LLC. All rights reserved."
 	msg "This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -244,6 +244,8 @@ function start_guest {
 	local old_termux_exec_cmd=false
 	local sysv_ipc=true
 
+	local force_no_proot=false
+
 	local exec_cmd
 
 	while (($# >= 1)); do
@@ -257,7 +259,7 @@ function start_guest {
 				rootfs_path="${2}"
 				shift 1
 			else
-				echo "--path requires an argument" 1>&2
+				echo "--path argument requires an path" 1>&2
 				exit 1
 			fi
 			;;
@@ -269,6 +271,9 @@ function start_guest {
 			;;
 		--no-sysv-ipc)
 			sysv_ipc=false
+			;;
+		--force-no-proot)
+			force_no_proot=true
 			;;
 		*)
 			msg "${RED}Error: unknown parameter: '$1'${NC}"
@@ -356,17 +361,18 @@ function start_guest {
 
 	setup_fake_proc "${rootfs_path}"
 
-	if [ "$(uname -o)" = "Android" ]; then
-		if $old_termux_exec_cmd; then
+	if [ "$(uname -o)" != "Android" ] || ${force_no_proot}; then
+		echo -e "Your environment is defined as proot (or forced)\n"
+		generate_proot_env_exec_cmd "${rootfs_path}" "${make_host_tmp_shared}" "${sysv_ipc}"
+	else
+		if ${old_termux_exec_cmd}; then
 			echo -e "Your environment is defined as Termux (executed with --old flag)\n"
 			generate_termux_old_env_exec_cmd "${rootfs_path}" "${make_host_tmp_shared}" "${sysv_ipc}"
 		else
 			echo -e "Your environment is defined as Termux\n"
 			generate_termux_env_exec_cmd "${rootfs_path}" "${make_host_tmp_shared}" "${sysv_ipc}"
 		fi
-	else
-		echo -e "Your environment is defined as proot\n"
-		generate_proot_env_exec_cmd "${rootfs_path}" "${make_host_tmp_shared}" "${sysv_ipc}"
+
 	fi
 
 	echo -e "${GREEN}[Starting x86 environment]${NC}\n"
