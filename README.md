@@ -19,6 +19,8 @@ Every process is hooked through ptrace(), so PRoot can hijack the system call ar
 A critical error, which at the moment there is no explanation - because of what and how to solve it. If you have a solution, please join the discussion - [FATAL: attempted to create non-posix thread; clone_flags == 00004111](https://github.com/ZhymabekRoman/Exagear-For-Termux/issues/16)
 
 ## Installation
+Recommended manual for beginners: [Run Windows exe on Android through Proot Exagear on Termux](https://ivonblog.com/en-us/posts/termux-proot-exagear-wine/)
+
 1) Install `tar`, `wget` and `git` using Termux's package manager (`pkg`):
 ```bash
 pkg update -y && pkg install tar git wget -y
