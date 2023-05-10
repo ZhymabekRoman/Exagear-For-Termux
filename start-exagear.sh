@@ -7,7 +7,7 @@
 
 # Constants
 PROGRAM_NAME="ExaGear for Termux"
-PROGRAM_VERSION="3.0-stable"
+PROGRAM_VERSION="3.1-stable"
 CURRENT_WORK_FOLDER="$(
     cd -- "$(dirname "$0")" >/dev/null 2>&1
     pwd
@@ -242,6 +242,7 @@ function start_guest {
 
     local make_host_tmp_shared=false
     local old_termux_exec_cmd=false
+    local force_no_proot=false
     local sysv_ipc=true
 
     local exec_cmd
@@ -302,7 +303,7 @@ function start_guest {
         MEMORY_BITS="2g"
     fi
 
-    msg "System memory configuration is determined as ${MEMORY_BITS}\n"
+    msg "System memory configuration is determined as ${MEMORY_BITS}"
 
     if [ ! -d "${rootfs_path}" ] || [ -z "$(ls -A "${rootfs_path}")" ]; then
         msg "Guest rootfs '$(basename "${rootfs_path}")' folder not found or empty. Exit..."
