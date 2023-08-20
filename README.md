@@ -1,4 +1,10 @@
 # Exagear For Termux
+
+
+## CAUTON: WE HAVE SOME SERIOUS ISSUES! SEE in ISSUES section below
+
+
+
 **Exagear For Termux** - Non official modified version of Exagear for Termux and proot based environemnts - Anlinux, AndroNix, UserLand and etc. The main goal of the project is to achieve the possibility of a stable and fast replacement of QEMU user mode with proot, which is very slow and not stable. No root access required.
 
 ## What is Exagear?
