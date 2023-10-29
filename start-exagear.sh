@@ -223,7 +223,7 @@ function generate_termux_old_env_exec_cmd {
 
 function edit_passwd {
     local rootfs_path="${1}"
-    cp "${CURRENT_WORK_FOLDER}/bin/other/passwd" "${rootfs_path}/etc/"
+    cp -f "${CURRENT_WORK_FOLDER}/bin/other/passwd" "${rootfs_path}/etc/"
 }
 
 function setup_fake_proc {
@@ -234,7 +234,7 @@ function setup_fake_proc {
 
     # Setup selinux rule
     mkdir -p "${rootfs_path}/sys/fs/selinux/"
-    cp -n "${CURRENT_WORK_FOLDER}/bin/other/selinux_enforce" "${rootfs_path}/sys/fs/selinux/enforce"
+    cp -f "${CURRENT_WORK_FOLDER}/bin/other/selinux_enforce" "${rootfs_path}/sys/fs/selinux/enforce"
 }
 
 function start_guest {
