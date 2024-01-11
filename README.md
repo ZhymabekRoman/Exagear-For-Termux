@@ -49,10 +49,12 @@ git submodule update
 ```bash
 # Let's create 'exagear-fs' folder
 mkdir exagear-fs/
-# Download Debian 11 from proot-distro's repo
-wget https://github.com/termux/proot-distro/releases/download/v2.2.0/debian-i686-pd-v2.2.0.tar.xz
+# Download Debian 12 from proot-distro's repo
+wget "https://github.com/termux/proot-distro/releases/download/v4.6.0/debian-i686-pd-v4.6.0.tar.xz"
 # Extract tar
-tar -C exagear-fs/ --warning=no-unknown-keyword --delay-directory-restore --preserve-permissions -xvf debian-i686-pd-v2.2.0.tar.xz --exclude='dev'||:
+tar --warning=no-unknown-keyword --delay-directory-restore --preserve-permissions -xvf debian-i686-pd-v4.6.0.tar.xz --exclude='dev'||:
+# Rename extracted folder
+mv debian-i686 exagear-fs
 ```
 5) Done. Let's start Exagear-For-Termux
 ```bash
