@@ -47,8 +47,6 @@ git submodule update
 ```
 4) Now you need to extract any rootfs archive of the distribution into the `exagear-fs` folder. For example, let's take and extract the Debian 11 archive that came with proot-distro:
 ```bash
-# Let's create 'exagear-fs' folder
-mkdir exagear-fs/
 # Download Debian 12 from proot-distro's repo
 wget "https://github.com/termux/proot-distro/releases/download/v4.6.0/debian-i686-pd-v4.6.0.tar.xz"
 # Extract tar
